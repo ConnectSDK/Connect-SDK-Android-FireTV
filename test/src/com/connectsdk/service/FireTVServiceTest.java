@@ -106,6 +106,7 @@ public class FireTVServiceTest {
                 MediaPlayer.MetaData_MimeType,
                 MediaPlayer.MetaData_Thumbnail,
                 MediaPlayer.MetaData_Title,
+                MediaPlayer.Subtitles_Vtt,
 
                 MediaControl.Play,
                 MediaControl.Pause,
