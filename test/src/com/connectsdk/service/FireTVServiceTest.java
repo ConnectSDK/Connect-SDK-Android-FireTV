@@ -156,6 +156,8 @@ public class FireTVServiceTest {
                 service.getPriorityLevel(VolumeControl.class));
         Assert.assertEquals(CapabilityMethods.CapabilityPriorityLevel.NOT_SUPPORTED,
                 service.getPriorityLevel(WebAppLauncher.class));
+        Assert.assertEquals(CapabilityMethods.CapabilityPriorityLevel.NOT_SUPPORTED,
+                service.getPriorityLevel(null));
     }
 
 
@@ -798,6 +800,16 @@ public class FireTVServiceTest {
         } catch (RuntimeException e) {
             Assert.fail("subscribePlayState(null) should not throw a runtime exception");
         }
+    }
+
+    @Test
+    public void testSubscribePlayStateWithNullStatusShouldReturnUnknownState() {
+        MediaControl.PlayStateListener listener =
+                Mockito.mock(MediaControl.PlayStateListener.class);
+        FireTVService.PlayStateSubscription subscription =
+                (FireTVService.PlayStateSubscription) service.subscribePlayState(listener);
+        subscription.onStatusChange(null, 0);
+        Mockito.verify(listener).onSuccess(MediaControl.PlayStateStatus.Unknown);
     }
 
     @Test

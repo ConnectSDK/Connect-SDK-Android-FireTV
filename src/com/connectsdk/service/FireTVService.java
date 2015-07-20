@@ -78,7 +78,8 @@ public class FireTVService extends DeviceService implements MediaPlayer, MediaCo
 
     public FireTVService(ServiceDescription serviceDescription, ServiceConfig serviceConfig) {
         super(serviceDescription, serviceConfig);
-        if (serviceDescription.getDevice() instanceof RemoteMediaPlayer) {
+        if (serviceDescription != null
+                && serviceDescription.getDevice() instanceof RemoteMediaPlayer) {
             this.remoteMediaPlayer = (RemoteMediaPlayer) serviceDescription.getDevice();
         } else {
             this.remoteMediaPlayer = null;
@@ -129,6 +130,7 @@ public class FireTVService extends DeviceService implements MediaPlayer, MediaCo
         super.disconnect();
         if (playStateSubscription != null) {
             playStateSubscription.unsubscribe();
+            playStateSubscription = null;
         }
         connected = false;
     }
@@ -162,10 +164,12 @@ public class FireTVService extends DeviceService implements MediaPlayer, MediaCo
      */
     @Override
     public CapabilityPriorityLevel getPriorityLevel(Class<? extends CapabilityMethods> clazz) {
-        if (clazz.equals(MediaPlayer.class)) {
-            return getMediaPlayerCapabilityLevel();
-        } else if (clazz.equals(MediaControl.class)) {
-            return getMediaControlCapabilityLevel();
+        if (clazz != null) {
+            if (clazz.equals(MediaPlayer.class)) {
+                return getMediaPlayerCapabilityLevel();
+            } else if (clazz.equals(MediaControl.class)) {
+                return getMediaControlCapabilityLevel();
+            }
         }
         return CapabilityPriorityLevel.NOT_SUPPORTED;
     }
@@ -476,21 +480,23 @@ public class FireTVService extends DeviceService implements MediaPlayer, MediaCo
 
     PlayStateStatus createPlayStateStatusFromFireTVStatus(MediaPlayerStatus status) {
         PlayStateStatus playState = PlayStateStatus.Unknown;
-        switch (status.getState()) {
-            case PreparingMedia:
-                playState = PlayStateStatus.Buffering;
-                break;
-            case Playing:
-                playState = PlayStateStatus.Playing;
-                break;
-            case Paused:
-                playState = PlayStateStatus.Paused;
-                break;
-            case Finished:
-                playState = PlayStateStatus.Finished;
-                break;
-            case NoSource:
-                playState = PlayStateStatus.Idle;
+        if (status != null) {
+            switch (status.getState()) {
+                case PreparingMedia:
+                    playState = PlayStateStatus.Buffering;
+                    break;
+                case Playing:
+                    playState = PlayStateStatus.Playing;
+                    break;
+                case Paused:
+                    playState = PlayStateStatus.Paused;
+                    break;
+                case Finished:
+                    playState = PlayStateStatus.Finished;
+                    break;
+                case NoSource:
+                    playState = PlayStateStatus.Idle;
+            }
         }
         return playState;
     }
