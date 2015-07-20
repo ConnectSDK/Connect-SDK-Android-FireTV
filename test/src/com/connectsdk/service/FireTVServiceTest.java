@@ -787,6 +787,24 @@ public class FireTVServiceTest {
         Assert.assertTrue(service.isConnectable());
     }
 
+    @Test
+    public void testSubscribePlayStateWithNullListenerShouldNotCrash() {
+        try {
+            FireTVService.PlayStateSubscription subscription =
+                    (FireTVService.PlayStateSubscription) service.subscribePlayState(null);
+            MediaPlayerStatus status = Mockito.mock(MediaPlayerStatus.class);
+            Mockito.when(status.getState()).thenReturn(MediaPlayerStatus.MediaState.Playing);
+            subscription.onStatusChange(status, 0);
+        } catch (RuntimeException e) {
+            Assert.fail("subscribePlayState(null) should not throw a runtime exception");
+        }
+    }
+
+    @Test
+    public void testSubscribeMediaInfoShouldReturnNull() {
+        Assert.assertNull(service.subscribeMediaInfo(null));
+    }
+
     private void verifySetMediaSource(String source, String meta, boolean isAutoPlay,
                                       boolean isPlayInBg) throws JSONException {
         ArgumentCaptor<String> argSource = ArgumentCaptor.forClass(String.class);
