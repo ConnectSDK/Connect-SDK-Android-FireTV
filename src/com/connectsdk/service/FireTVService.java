@@ -624,7 +624,9 @@ public class FireTVService extends DeviceService implements MediaPlayer, MediaCo
         Status prevStatus;
 
         public Subscription(Listener listener) {
-            this.listeners.add(listener);
+            if (listener != null) {
+                this.listeners.add(listener);
+            }
         }
 
         synchronized void notifyListeners(final Status status) {
@@ -643,7 +645,9 @@ public class FireTVService extends DeviceService implements MediaPlayer, MediaCo
 
         @Override
         public Listener addListener(Listener listener) {
-            listeners.add(listener);
+            if (listener != null) {
+                listeners.add(listener);
+            }
             return listener;
         }
 
