@@ -40,6 +40,7 @@ import com.connectsdk.service.config.ServiceConfig;
 import com.connectsdk.service.config.ServiceDescription;
 import com.connectsdk.service.sessions.LaunchSession;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -71,6 +72,16 @@ public class FireTVService extends DeviceService implements MediaPlayer, MediaCo
     private static final String META_ICON_IMAGE = "poster";
 
     private static final String META_NOREPLAY = "noreplay";
+
+    private static final String META_TRACKS = "tracks";
+
+    private static final String META_SRC = "src";
+
+    private static final String META_KIND = "kind";
+
+    private static final String META_SRCLANG = "srclang";
+
+    private static final String META_LABEL = "label";
 
     private final RemoteMediaPlayer remoteMediaPlayer;
 
@@ -146,6 +157,7 @@ public class FireTVService extends DeviceService implements MediaPlayer, MediaCo
         capabilities.add(MediaPlayer.MetaData_MimeType);
         capabilities.add(MediaPlayer.MetaData_Thumbnail);
         capabilities.add(MediaPlayer.MetaData_Title);
+        capabilities.add(MediaPlayer.Subtitles_Vtt)
 
         capabilities.add(MediaControl.Play);
         capabilities.add(MediaControl.Pause);
@@ -245,7 +257,7 @@ public class FireTVService extends DeviceService implements MediaPlayer, MediaCo
     @Override
     public void displayImage(String url, String mimeType, String title, String description,
                              String iconSrc, final LaunchListener listener) {
-        setMediaSource(url, mimeType, title, description, iconSrc, listener);
+        setMediaSource(url, null, mimeType, title, description, iconSrc, listener);
     }
 
     /**
@@ -261,7 +273,7 @@ public class FireTVService extends DeviceService implements MediaPlayer, MediaCo
     @Override
     public void playMedia(String url, String mimeType, String title, String description,
                           String iconSrc, boolean shouldLoop, LaunchListener listener) {
-        setMediaSource(url, mimeType, title, description, iconSrc, listener);
+        setMediaSource(url, null, mimeType, title, description, iconSrc, listener);
     }
 
     /**
@@ -511,7 +523,7 @@ public class FireTVService extends DeviceService implements MediaPlayer, MediaCo
      * @param iconImage
      * @return
      */
-    private String getMetadata(String title, String description, String mimeType, String iconImage)
+    private String getMetadata(String title, String description, String mimeType, String iconImage, String subsUrl)
             throws JSONException {
         JSONObject json = new JSONObject();
         if (title != null && !title.isEmpty()) {
@@ -525,6 +537,16 @@ public class FireTVService extends DeviceService implements MediaPlayer, MediaCo
             json.put(META_ICON_IMAGE, iconImage);
         }
         json.put(META_NOREPLAY, true);
+        if(subsUrl != null && !subsUrl.isEmpty()) {
+            JSONArray tracksArray = new JSONArray();
+            JSONObject trackObj = new JSONObject();
+            trackObj.put(META_KIND, "subtitles");
+            trackObj.put(META_LABEL, "Subtitle");
+            trackObj.put(META_SRC, subsUrl);
+            trackObj.put(META_SRCLANG, "en");
+            tracksArray.put(trackObj);
+            json.put(META_TRACKS, tracksArray);
+        }
         return json.toString();
     }
 
@@ -547,16 +569,16 @@ public class FireTVService extends DeviceService implements MediaPlayer, MediaCo
                 iconSrc = imageInfo.getUrl();
             }
         }
-        setMediaSource(mediaInfo.getUrl(), mediaInfo.getMimeType(), mediaInfo.getTitle(),
+        setMediaSource(mediaInfo.getUrl(), mediaInfo.getSubsUrl(), mediaInfo.getMimeType(), mediaInfo.getTitle(),
                 mediaInfo.getDescription(), iconSrc, listener);
     }
 
-    private void setMediaSource(String url, String mimeType, String title, String description,
+    private void setMediaSource(String url, String subsUrl, String mimeType, String title, String description,
                                 String iconSrc, final LaunchListener listener) {
         final String error = "Error setting media source";
         RemoteMediaPlayer.AsyncFuture<Void> asyncFuture = null;
         try {
-            final String metadata = getMetadata(title, description, mimeType, iconSrc);
+            final String metadata = getMetadata(title, description, mimeType, iconSrc, subsUrl);
             asyncFuture = remoteMediaPlayer.setMediaSource(url, metadata, true, false);
         } catch (Exception e) {
             Util.postError(listener, new FireTVServiceError(error, e));
