@@ -26,6 +26,7 @@ import com.amazon.whisperplay.fling.media.service.MediaPlayerInfo;
 import com.amazon.whisperplay.fling.media.service.MediaPlayerStatus;
 import com.connectsdk.core.ImageInfo;
 import com.connectsdk.core.MediaInfo;
+import com.connectsdk.core.SubtitleInfo;
 import com.connectsdk.device.ConnectableDevice;
 import com.connectsdk.discovery.DiscoveryFilter;
 import com.connectsdk.service.capability.CapabilityMethods;
@@ -59,7 +60,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
@@ -106,7 +106,7 @@ public class FireTVServiceTest {
                 MediaPlayer.MetaData_MimeType,
                 MediaPlayer.MetaData_Thumbnail,
                 MediaPlayer.MetaData_Title,
-                MediaPlayer.Subtitles_Vtt,
+                MediaPlayer.Subtitle_VTT,
 
                 MediaControl.Play,
                 MediaControl.Pause,
@@ -382,6 +382,44 @@ public class FireTVServiceTest {
         service.playMedia(mediaInfo, false, launchListener);
         String metadata = "{'title':'title','description':'description','type':'mime'," +
                 "'poster':'imageUrl','noreplay':true}";
+        verifySetMediaSource(mediaInfo.getUrl(), metadata, true, false);
+    }
+
+    @Test
+    public void testPlayMediaWithSubtitles() throws JSONException {
+        MediaPlayer.LaunchListener launchListener = Mockito.mock(MediaPlayer.LaunchListener.class);
+        MediaInfo mediaInfo = new MediaInfo.Builder("url", "mime")
+                .setTitle("title")
+                .setDescription("description")
+                .setIcon("http://icon")
+                .setSubtitle(new SubtitleInfo.Builder("http://subtitleurl", "subtitletype")
+                    .setLabel("subtitlelabel")
+                    .setLanguage("en")
+                    .build())
+                .build();
+
+        service.playMedia(mediaInfo, false, launchListener);
+        String metadata = "{'title':'title','description':'description','type':'mime'," +
+                "'poster':'http://icon','tracks':[{'srclang':'en','label':'subtitlelabel'," +
+                "'src':'http://subtitleurl','kind':'subtitles'}],'noreplay':true}";
+        verifySetMediaSource(mediaInfo.getUrl(), metadata, true, false);
+    }
+
+    @Test
+    public void testPlayMediaWithOnlyRequiredFieldsInSubtitles() throws JSONException {
+        MediaPlayer.LaunchListener launchListener = Mockito.mock(MediaPlayer.LaunchListener.class);
+        MediaInfo mediaInfo = new MediaInfo.Builder("url", "mime")
+                .setTitle("title")
+                .setDescription("description")
+                .setIcon("http://icon")
+                .setSubtitle(new SubtitleInfo.Builder("http://subtitleurl", "subtitletype")
+                        .build())
+                .build();
+
+        service.playMedia(mediaInfo, false, launchListener);
+        String metadata = "{'title':'title','description':'description','type':'mime'," +
+                "'poster':'http://icon','tracks':[{'src':'http://subtitleurl'," +
+                "'kind':'subtitles'}],'noreplay':true}";
         verifySetMediaSource(mediaInfo.getUrl(), metadata, true, false);
     }
 
