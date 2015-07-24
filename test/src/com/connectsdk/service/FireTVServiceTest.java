@@ -419,7 +419,7 @@ public class FireTVServiceTest {
 
         service.playMedia(mediaInfo, false, launchListener);
         String metadata = "{'title':'title','description':'description','type':'mime'," +
-                "'poster':'http://icon','tracks':[{'src':'http://subtitleurl'," +
+                "'poster':'http://icon','tracks':[{'srclang':'','label':'','src':'http://subtitleurl'," +
                 "'kind':'subtitles'}],'noreplay':true}";
         verifySetMediaSource(mediaInfo.getUrl(), metadata, true, false);
     }

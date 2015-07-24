@@ -540,12 +540,10 @@ public class FireTVService extends DeviceService implements MediaPlayer, MediaCo
             JSONObject trackObj = new JSONObject();
             trackObj.put(META_KIND, "subtitles");
             trackObj.put(META_SRC, mediaInfo.getSubtitle().getUrl());
-            if (mediaInfo.getSubtitle().getLabel() != null) {
-                trackObj.put(META_LABEL, mediaInfo.getSubtitle().getLabel());
-            }
-            if (mediaInfo.getSubtitle().getLanguage() != null) {
-                trackObj.put(META_SRCLANG, mediaInfo.getSubtitle().getLanguage());
-            }
+            String label = mediaInfo.getSubtitle().getLabel();
+            trackObj.put(META_LABEL, label == null ? "" : label);
+            String language = mediaInfo.getSubtitle().getLanguage();
+            trackObj.put(META_SRCLANG, language == null ? "" : language);
             tracksArray.put(trackObj);
             json.put(META_TRACKS, tracksArray);
         }
