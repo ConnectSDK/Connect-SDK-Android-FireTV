@@ -392,10 +392,11 @@ public class FireTVServiceTest {
                 .setTitle("title")
                 .setDescription("description")
                 .setIcon("http://icon")
-                .setSubtitle(new SubtitleInfo.Builder("http://subtitleurl", "subtitletype")
-                    .setLabel("subtitlelabel")
-                    .setLanguage("en")
-                    .build())
+                .setSubtitle(new SubtitleInfo.Builder("http://subtitleurl")
+                        .setMimeType("subtitletype")
+                        .setLabel("subtitlelabel")
+                        .setLanguage("en")
+                        .build())
                 .build();
 
         service.playMedia(mediaInfo, false, launchListener);
@@ -412,7 +413,7 @@ public class FireTVServiceTest {
                 .setTitle("title")
                 .setDescription("description")
                 .setIcon("http://icon")
-                .setSubtitle(new SubtitleInfo.Builder("http://subtitleurl", "subtitletype")
+                .setSubtitle(new SubtitleInfo.Builder("http://subtitleurl")
                         .build())
                 .build();
 
