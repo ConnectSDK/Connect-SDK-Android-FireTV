@@ -27,7 +27,6 @@ import com.amazon.whisperplay.fling.media.service.MediaPlayerInfo;
 import com.amazon.whisperplay.fling.media.service.MediaPlayerStatus;
 import com.connectsdk.core.ImageInfo;
 import com.connectsdk.core.MediaInfo;
-import com.connectsdk.core.SubtitleInfo;
 import com.connectsdk.core.Util;
 import com.connectsdk.discovery.DiscoveryFilter;
 import com.connectsdk.service.capability.CapabilityMethods;
@@ -65,27 +64,17 @@ public class FireTVService extends DeviceService implements MediaPlayer, MediaCo
     public static final String ID = "FireTV";
 
     private static final String META_TITLE = "title";
-
     private static final String META_DESCRIPTION = "description";
-
     private static final String META_MIME_TYPE = "type";
-
     private static final String META_ICON_IMAGE = "poster";
-
     private static final String META_NOREPLAY = "noreplay";
-
     private static final String META_TRACKS = "tracks";
-
     private static final String META_SRC = "src";
-
     private static final String META_KIND = "kind";
-
     private static final String META_SRCLANG = "srclang";
-
     private static final String META_LABEL = "label";
 
     private final RemoteMediaPlayer remoteMediaPlayer;
-
     private PlayStateSubscription playStateSubscription;
 
     public FireTVService(ServiceDescription serviceDescription, ServiceConfig serviceConfig) {
@@ -527,22 +516,22 @@ public class FireTVService extends DeviceService implements MediaPlayer, MediaCo
         }
         json.put(META_MIME_TYPE, mediaInfo.getMimeType());
         if (mediaInfo.getImages() != null && mediaInfo.getImages().size() > 0) {
-            if (mediaInfo.getImages().get(0) != null) {
-                ImageInfo image = mediaInfo.getImages().get(0);
+            ImageInfo image = mediaInfo.getImages().get(0);
+            if (image != null) {
                 if (image.getUrl() != null && !image.getUrl().isEmpty()) {
                     json.put(META_ICON_IMAGE, image.getUrl());
                 }
             }
         }
         json.put(META_NOREPLAY, true);
-        if (mediaInfo.getSubtitle() != null) {
+        if (mediaInfo.getSubtitleInfo() != null) {
             JSONArray tracksArray = new JSONArray();
             JSONObject trackObj = new JSONObject();
             trackObj.put(META_KIND, "subtitles");
-            trackObj.put(META_SRC, mediaInfo.getSubtitle().getUrl());
-            String label = mediaInfo.getSubtitle().getLabel();
+            trackObj.put(META_SRC, mediaInfo.getSubtitleInfo().getUrl());
+            String label = mediaInfo.getSubtitleInfo().getLabel();
             trackObj.put(META_LABEL, label == null ? "" : label);
-            String language = mediaInfo.getSubtitle().getLanguage();
+            String language = mediaInfo.getSubtitleInfo().getLanguage();
             trackObj.put(META_SRCLANG, language == null ? "" : language);
             tracksArray.put(trackObj);
             json.put(META_TRACKS, tracksArray);

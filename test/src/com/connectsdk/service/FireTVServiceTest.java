@@ -67,7 +67,9 @@ import org.robolectric.annotation.Config;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -97,7 +99,7 @@ public class FireTVServiceTest {
 
     @Test
     public void testGetCapabilities() {
-        List<String> requiredCapabilities = Arrays.asList(new String[]{
+        Set<String> requiredCapabilities = new HashSet<String>(Arrays.asList(new String[]{
                 MediaPlayer.MediaInfo_Get,
                 MediaPlayer.Display_Image,
                 MediaPlayer.Play_Audio,
@@ -116,8 +118,8 @@ public class FireTVServiceTest {
                 MediaControl.Position,
                 MediaControl.PlayState,
                 MediaControl.PlayState_Subscribe,
-        });
-        List<String> capabilities = service.getCapabilities();
+        }));
+        Set<String> capabilities = new HashSet<String>(service.getCapabilities());
         Assert.assertEquals(requiredCapabilities, capabilities);
     }
 
@@ -392,7 +394,7 @@ public class FireTVServiceTest {
                 .setTitle("title")
                 .setDescription("description")
                 .setIcon("http://icon")
-                .setSubtitle(new SubtitleInfo.Builder("http://subtitleurl")
+                .setSubtitleInfo(new SubtitleInfo.Builder("http://subtitleurl")
                         .setMimeType("subtitletype")
                         .setLabel("subtitlelabel")
                         .setLanguage("en")
@@ -413,8 +415,7 @@ public class FireTVServiceTest {
                 .setTitle("title")
                 .setDescription("description")
                 .setIcon("http://icon")
-                .setSubtitle(new SubtitleInfo.Builder("http://subtitleurl")
-                        .build())
+                .setSubtitleInfo(new SubtitleInfo.Builder("http://subtitleurl").build())
                 .build();
 
         service.playMedia(mediaInfo, false, launchListener);
