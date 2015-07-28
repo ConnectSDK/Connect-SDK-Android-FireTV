@@ -145,7 +145,7 @@ public class FireTVService extends DeviceService implements MediaPlayer, MediaCo
         capabilities.add(MediaPlayer.MetaData_MimeType);
         capabilities.add(MediaPlayer.MetaData_Thumbnail);
         capabilities.add(MediaPlayer.MetaData_Title);
-        capabilities.add(MediaPlayer.Subtitle_VTT);
+        capabilities.add(MediaPlayer.Subtitle_WebVTT);
 
         capabilities.add(MediaControl.Play);
         capabilities.add(MediaControl.Pause);
