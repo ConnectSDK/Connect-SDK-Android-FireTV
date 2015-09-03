@@ -37,6 +37,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
+import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 
 
@@ -328,7 +329,7 @@ public class FireTVDiscoveryProviderTest {
 
     @Test
     public void testInitialState() {
-        FireTVDiscoveryProvider provider = new FireTVDiscoveryProvider(Robolectric.application);
+        FireTVDiscoveryProvider provider = new FireTVDiscoveryProvider(RuntimeEnvironment.application);
         Assert.assertNotNull(provider.fireTVListener);
         Assert.assertNotNull(provider.foundServices);
         Assert.assertNotNull(provider.serviceListeners);
