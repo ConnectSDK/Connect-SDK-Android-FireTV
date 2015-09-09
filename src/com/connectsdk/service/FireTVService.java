@@ -40,6 +40,7 @@ import com.connectsdk.service.config.ServiceConfig;
 import com.connectsdk.service.config.ServiceDescription;
 import com.connectsdk.service.sessions.LaunchSession;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -63,22 +64,23 @@ public class FireTVService extends DeviceService implements MediaPlayer, MediaCo
     public static final String ID = "FireTV";
 
     private static final String META_TITLE = "title";
-
     private static final String META_DESCRIPTION = "description";
-
     private static final String META_MIME_TYPE = "type";
-
     private static final String META_ICON_IMAGE = "poster";
-
     private static final String META_NOREPLAY = "noreplay";
+    private static final String META_TRACKS = "tracks";
+    private static final String META_SRC = "src";
+    private static final String META_KIND = "kind";
+    private static final String META_SRCLANG = "srclang";
+    private static final String META_LABEL = "label";
 
     private final RemoteMediaPlayer remoteMediaPlayer;
-
     private PlayStateSubscription playStateSubscription;
 
     public FireTVService(ServiceDescription serviceDescription, ServiceConfig serviceConfig) {
         super(serviceDescription, serviceConfig);
-        if (serviceDescription.getDevice() instanceof RemoteMediaPlayer) {
+        if (serviceDescription != null
+                && serviceDescription.getDevice() instanceof RemoteMediaPlayer) {
             this.remoteMediaPlayer = (RemoteMediaPlayer) serviceDescription.getDevice();
         } else {
             this.remoteMediaPlayer = null;
@@ -129,6 +131,7 @@ public class FireTVService extends DeviceService implements MediaPlayer, MediaCo
         super.disconnect();
         if (playStateSubscription != null) {
             playStateSubscription.unsubscribe();
+            playStateSubscription = null;
         }
         connected = false;
     }
@@ -144,6 +147,7 @@ public class FireTVService extends DeviceService implements MediaPlayer, MediaCo
         capabilities.add(MediaPlayer.MetaData_MimeType);
         capabilities.add(MediaPlayer.MetaData_Thumbnail);
         capabilities.add(MediaPlayer.MetaData_Title);
+        capabilities.add(MediaPlayer.Subtitle_WebVTT);
 
         capabilities.add(MediaControl.Play);
         capabilities.add(MediaControl.Pause);
@@ -162,10 +166,12 @@ public class FireTVService extends DeviceService implements MediaPlayer, MediaCo
      */
     @Override
     public CapabilityPriorityLevel getPriorityLevel(Class<? extends CapabilityMethods> clazz) {
-        if (clazz.equals(MediaPlayer.class)) {
-            return getMediaPlayerCapabilityLevel();
-        } else if (clazz.equals(MediaControl.class)) {
-            return getMediaControlCapabilityLevel();
+        if (clazz != null) {
+            if (clazz.equals(MediaPlayer.class)) {
+                return getMediaPlayerCapabilityLevel();
+            } else if (clazz.equals(MediaControl.class)) {
+                return getMediaControlCapabilityLevel();
+            }
         }
         return CapabilityPriorityLevel.NOT_SUPPORTED;
     }
@@ -241,7 +247,11 @@ public class FireTVService extends DeviceService implements MediaPlayer, MediaCo
     @Override
     public void displayImage(String url, String mimeType, String title, String description,
                              String iconSrc, final LaunchListener listener) {
-        setMediaSource(url, mimeType, title, description, iconSrc, listener);
+        setMediaSource(new MediaInfo.Builder(url, mimeType)
+                .setTitle(title)
+                .setDescription(description)
+                .setIcon(iconSrc)
+                .build(), listener);
     }
 
     /**
@@ -257,7 +267,11 @@ public class FireTVService extends DeviceService implements MediaPlayer, MediaCo
     @Override
     public void playMedia(String url, String mimeType, String title, String description,
                           String iconSrc, boolean shouldLoop, LaunchListener listener) {
-        setMediaSource(url, mimeType, title, description, iconSrc, listener);
+        setMediaSource(new MediaInfo.Builder(url, mimeType)
+                .setTitle(title)
+                .setDescription(description)
+                .setIcon(iconSrc)
+                .build(), listener);
     }
 
     /**
@@ -277,7 +291,7 @@ public class FireTVService extends DeviceService implements MediaPlayer, MediaCo
      */
     @Override
     public void displayImage(MediaInfo mediaInfo, LaunchListener listener) {
-        setMediaSourceFromMediaInfo(mediaInfo, listener);
+        setMediaSource(mediaInfo, listener);
     }
 
     /**
@@ -288,7 +302,7 @@ public class FireTVService extends DeviceService implements MediaPlayer, MediaCo
      */
     @Override
     public void playMedia(MediaInfo mediaInfo, boolean shouldLoop, LaunchListener listener) {
-        setMediaSourceFromMediaInfo(mediaInfo, listener);
+        setMediaSource(mediaInfo, listener);
     }
 
     /**
@@ -476,52 +490,60 @@ public class FireTVService extends DeviceService implements MediaPlayer, MediaCo
 
     PlayStateStatus createPlayStateStatusFromFireTVStatus(MediaPlayerStatus status) {
         PlayStateStatus playState = PlayStateStatus.Unknown;
-        switch (status.getState()) {
-            case PreparingMedia:
-                playState = PlayStateStatus.Buffering;
-                break;
-            case Playing:
-                playState = PlayStateStatus.Playing;
-                break;
-            case Paused:
-                playState = PlayStateStatus.Paused;
-                break;
-            case Finished:
-                playState = PlayStateStatus.Finished;
-                break;
-            case NoSource:
-                playState = PlayStateStatus.Idle;
+        if (status != null) {
+            switch (status.getState()) {
+                case PreparingMedia:
+                    playState = PlayStateStatus.Buffering;
+                    break;
+                case Playing:
+                    playState = PlayStateStatus.Playing;
+                    break;
+                case Paused:
+                    playState = PlayStateStatus.Paused;
+                    break;
+                case Finished:
+                    playState = PlayStateStatus.Finished;
+                    break;
+                case NoSource:
+                    playState = PlayStateStatus.Idle;
+            }
         }
         return playState;
     }
 
-    /**
-     * Make a json metadata for Fire TV controller from strings
-     *
-     *
-     * @param title
-     * @param description
-     * @param mimeType
-     * @param iconImage
-     * @return
-     */
-    private String getMetadata(String title, String description, String mimeType, String iconImage)
+    private String getMetadata(MediaInfo mediaInfo)
             throws JSONException {
         JSONObject json = new JSONObject();
-        if (title != null && !title.isEmpty()) {
-            json.put(META_TITLE, title);
+        if (mediaInfo.getTitle() != null && !mediaInfo.getTitle().isEmpty()) {
+            json.put(META_TITLE, mediaInfo.getTitle());
         }
-        if (description != null && !description.isEmpty()) {
-            json.put(META_DESCRIPTION, description);
+        if (mediaInfo.getDescription() != null && !mediaInfo.getDescription().isEmpty()) {
+            json.put(META_DESCRIPTION, mediaInfo.getDescription());
         }
-        json.put(META_MIME_TYPE, mimeType);
-        if (iconImage != null && !iconImage.isEmpty()) {
-            json.put(META_ICON_IMAGE, iconImage);
+        json.put(META_MIME_TYPE, mediaInfo.getMimeType());
+        if (mediaInfo.getImages() != null && mediaInfo.getImages().size() > 0) {
+            ImageInfo image = mediaInfo.getImages().get(0);
+            if (image != null) {
+                if (image.getUrl() != null && !image.getUrl().isEmpty()) {
+                    json.put(META_ICON_IMAGE, image.getUrl());
+                }
+            }
         }
         json.put(META_NOREPLAY, true);
+        if (mediaInfo.getSubtitleInfo() != null) {
+            JSONArray tracksArray = new JSONArray();
+            JSONObject trackObj = new JSONObject();
+            trackObj.put(META_KIND, "subtitles");
+            trackObj.put(META_SRC, mediaInfo.getSubtitleInfo().getUrl());
+            String label = mediaInfo.getSubtitleInfo().getLabel();
+            trackObj.put(META_LABEL, label == null ? "" : label);
+            String language = mediaInfo.getSubtitleInfo().getLanguage();
+            trackObj.put(META_SRCLANG, language == null ? "" : language);
+            tracksArray.put(trackObj);
+            json.put(META_TRACKS, tracksArray);
+        }
         return json.toString();
     }
-
 
     private MediaLaunchObject createMediaLaunchObject() {
         LaunchSession launchSession = new LaunchSession();
@@ -533,25 +555,12 @@ public class FireTVService extends DeviceService implements MediaPlayer, MediaCo
         return mediaLaunchObject;
     }
 
-    private void setMediaSourceFromMediaInfo(MediaInfo mediaInfo, LaunchListener listener) {
-        String iconSrc = "";
-        if (mediaInfo.getImages() != null && !mediaInfo.getImages().isEmpty()) {
-            ImageInfo imageInfo = mediaInfo.getImages().get(0);
-            if (imageInfo != null) {
-                iconSrc = imageInfo.getUrl();
-            }
-        }
-        setMediaSource(mediaInfo.getUrl(), mediaInfo.getMimeType(), mediaInfo.getTitle(),
-                mediaInfo.getDescription(), iconSrc, listener);
-    }
-
-    private void setMediaSource(String url, String mimeType, String title, String description,
-                                String iconSrc, final LaunchListener listener) {
+    private void setMediaSource(MediaInfo mediaInfo, final LaunchListener listener) {
         final String error = "Error setting media source";
         RemoteMediaPlayer.AsyncFuture<Void> asyncFuture = null;
         try {
-            final String metadata = getMetadata(title, description, mimeType, iconSrc);
-            asyncFuture = remoteMediaPlayer.setMediaSource(url, metadata, true, false);
+            final String metadata = getMetadata(mediaInfo);
+            asyncFuture = remoteMediaPlayer.setMediaSource(mediaInfo.getUrl(), metadata, true, false);
         } catch (Exception e) {
             Util.postError(listener, new FireTVServiceError(error, e));
             return;
@@ -624,7 +633,9 @@ public class FireTVService extends DeviceService implements MediaPlayer, MediaCo
         Status prevStatus;
 
         public Subscription(Listener listener) {
-            this.listeners.add(listener);
+            if (listener != null) {
+                this.listeners.add(listener);
+            }
         }
 
         synchronized void notifyListeners(final Status status) {
@@ -643,7 +654,9 @@ public class FireTVService extends DeviceService implements MediaPlayer, MediaCo
 
         @Override
         public Listener addListener(Listener listener) {
-            listeners.add(listener);
+            if (listener != null) {
+                listeners.add(listener);
+            }
             return listener;
         }
 

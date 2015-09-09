@@ -26,6 +26,7 @@ import com.amazon.whisperplay.fling.media.service.MediaPlayerInfo;
 import com.amazon.whisperplay.fling.media.service.MediaPlayerStatus;
 import com.connectsdk.core.ImageInfo;
 import com.connectsdk.core.MediaInfo;
+import com.connectsdk.core.SubtitleInfo;
 import com.connectsdk.device.ConnectableDevice;
 import com.connectsdk.discovery.DiscoveryFilter;
 import com.connectsdk.service.capability.CapabilityMethods;
@@ -59,7 +60,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
@@ -67,7 +67,9 @@ import org.robolectric.annotation.Config;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -97,7 +99,7 @@ public class FireTVServiceTest {
 
     @Test
     public void testGetCapabilities() {
-        List<String> requiredCapabilities = Arrays.asList(new String[]{
+        Set<String> requiredCapabilities = new HashSet<String>(Arrays.asList(new String[]{
                 MediaPlayer.MediaInfo_Get,
                 MediaPlayer.Display_Image,
                 MediaPlayer.Play_Audio,
@@ -106,6 +108,7 @@ public class FireTVServiceTest {
                 MediaPlayer.MetaData_MimeType,
                 MediaPlayer.MetaData_Thumbnail,
                 MediaPlayer.MetaData_Title,
+                MediaPlayer.Subtitle_WebVTT,
 
                 MediaControl.Play,
                 MediaControl.Pause,
@@ -115,8 +118,8 @@ public class FireTVServiceTest {
                 MediaControl.Position,
                 MediaControl.PlayState,
                 MediaControl.PlayState_Subscribe,
-        });
-        List<String> capabilities = service.getCapabilities();
+        }));
+        Set<String> capabilities = new HashSet<String>(service.getCapabilities());
         Assert.assertEquals(requiredCapabilities, capabilities);
     }
 
@@ -156,6 +159,8 @@ public class FireTVServiceTest {
                 service.getPriorityLevel(VolumeControl.class));
         Assert.assertEquals(CapabilityMethods.CapabilityPriorityLevel.NOT_SUPPORTED,
                 service.getPriorityLevel(WebAppLauncher.class));
+        Assert.assertEquals(CapabilityMethods.CapabilityPriorityLevel.NOT_SUPPORTED,
+                service.getPriorityLevel(null));
     }
 
 
@@ -381,6 +386,44 @@ public class FireTVServiceTest {
         service.playMedia(mediaInfo, false, launchListener);
         String metadata = "{'title':'title','description':'description','type':'mime'," +
                 "'poster':'imageUrl','noreplay':true}";
+        verifySetMediaSource(mediaInfo.getUrl(), metadata, true, false);
+    }
+
+    @Test
+    public void testPlayMediaWithSubtitles() throws JSONException {
+        MediaPlayer.LaunchListener launchListener = Mockito.mock(MediaPlayer.LaunchListener.class);
+        MediaInfo mediaInfo = new MediaInfo.Builder("url", "mime")
+                .setTitle("title")
+                .setDescription("description")
+                .setIcon("http://icon")
+                .setSubtitleInfo(new SubtitleInfo.Builder("http://subtitleurl")
+                        .setMimeType("subtitletype")
+                        .setLabel("subtitlelabel")
+                        .setLanguage("en")
+                        .build())
+                .build();
+
+        service.playMedia(mediaInfo, false, launchListener);
+        String metadata = "{'title':'title','description':'description','type':'mime'," +
+                "'poster':'http://icon','tracks':[{'srclang':'en','label':'subtitlelabel'," +
+                "'src':'http://subtitleurl','kind':'subtitles'}],'noreplay':true}";
+        verifySetMediaSource(mediaInfo.getUrl(), metadata, true, false);
+    }
+
+    @Test
+    public void testPlayMediaWithOnlyRequiredFieldsInSubtitles() throws JSONException {
+        MediaPlayer.LaunchListener launchListener = Mockito.mock(MediaPlayer.LaunchListener.class);
+        MediaInfo mediaInfo = new MediaInfo.Builder("url", "mime")
+                .setTitle("title")
+                .setDescription("description")
+                .setIcon("http://icon")
+                .setSubtitleInfo(new SubtitleInfo.Builder("http://subtitleurl").build())
+                .build();
+
+        service.playMedia(mediaInfo, false, launchListener);
+        String metadata = "{'title':'title','description':'description','type':'mime'," +
+                "'poster':'http://icon','tracks':[{'srclang':'','label':'','src':'http://subtitleurl'," +
+                "'kind':'subtitles'}],'noreplay':true}";
         verifySetMediaSource(mediaInfo.getUrl(), metadata, true, false);
     }
 
@@ -785,6 +828,34 @@ public class FireTVServiceTest {
     @Test
     public void testIsConnectable() {
         Assert.assertTrue(service.isConnectable());
+    }
+
+    @Test
+    public void testSubscribePlayStateWithNullListenerShouldNotCrash() {
+        try {
+            FireTVService.PlayStateSubscription subscription =
+                    (FireTVService.PlayStateSubscription) service.subscribePlayState(null);
+            MediaPlayerStatus status = Mockito.mock(MediaPlayerStatus.class);
+            Mockito.when(status.getState()).thenReturn(MediaPlayerStatus.MediaState.Playing);
+            subscription.onStatusChange(status, 0);
+        } catch (RuntimeException e) {
+            Assert.fail("subscribePlayState(null) should not throw a runtime exception");
+        }
+    }
+
+    @Test
+    public void testSubscribePlayStateWithNullStatusShouldReturnUnknownState() {
+        MediaControl.PlayStateListener listener =
+                Mockito.mock(MediaControl.PlayStateListener.class);
+        FireTVService.PlayStateSubscription subscription =
+                (FireTVService.PlayStateSubscription) service.subscribePlayState(listener);
+        subscription.onStatusChange(null, 0);
+        Mockito.verify(listener).onSuccess(MediaControl.PlayStateStatus.Unknown);
+    }
+
+    @Test
+    public void testSubscribeMediaInfoShouldReturnNull() {
+        Assert.assertNull(service.subscribeMediaInfo(null));
     }
 
     private void verifySetMediaSource(String source, String meta, boolean isAutoPlay,
