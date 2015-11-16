@@ -22,6 +22,7 @@ package com.connectsdk.discovery.provider;
 
 import com.amazon.whisperplay.fling.media.controller.DiscoveryController;
 import com.amazon.whisperplay.fling.media.controller.RemoteMediaPlayer;
+import com.connectsdk.BuildConfig;
 import com.connectsdk.discovery.DiscoveryProvider;
 import com.connectsdk.discovery.DiscoveryProviderListener;
 import com.connectsdk.service.FireTVService;
@@ -35,13 +36,13 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
-import org.robolectric.Robolectric;
-import org.robolectric.RobolectricTestRunner;
+import org.robolectric.RobolectricGradleTestRunner;
+import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 
 
-@RunWith(RobolectricTestRunner.class)
-@Config(manifest=Config.NONE)
+@RunWith(RobolectricGradleTestRunner.class)
+@Config(constants = BuildConfig.class, sdk = 21)
 public class FireTVDiscoveryProviderTest {
 
     private FireTVDiscoveryProvider provider;
@@ -328,7 +329,7 @@ public class FireTVDiscoveryProviderTest {
 
     @Test
     public void testInitialState() {
-        FireTVDiscoveryProvider provider = new FireTVDiscoveryProvider(Robolectric.application);
+        FireTVDiscoveryProvider provider = new FireTVDiscoveryProvider(RuntimeEnvironment.application);
         Assert.assertNotNull(provider.fireTVListener);
         Assert.assertNotNull(provider.foundServices);
         Assert.assertNotNull(provider.serviceListeners);
