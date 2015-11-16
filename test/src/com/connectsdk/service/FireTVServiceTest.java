@@ -24,6 +24,7 @@ import com.amazon.whisperplay.fling.media.controller.RemoteMediaPlayer;
 import com.amazon.whisperplay.fling.media.service.CustomMediaPlayer;
 import com.amazon.whisperplay.fling.media.service.MediaPlayerInfo;
 import com.amazon.whisperplay.fling.media.service.MediaPlayerStatus;
+import com.connectsdk.BuildConfig;
 import com.connectsdk.core.ImageInfo;
 import com.connectsdk.core.MediaInfo;
 import com.connectsdk.core.SubtitleInfo;
@@ -56,12 +57,14 @@ import junit.framework.Assert;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
-import org.robolectric.RobolectricTestRunner;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
+import org.robolectric.RobolectricGradleTestRunner;
 import org.robolectric.annotation.Config;
 
 import java.io.IOException;
@@ -75,8 +78,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 
-@RunWith(RobolectricTestRunner.class)
-@Config(manifest=Config.NONE)
+@RunWith(RobolectricGradleTestRunner.class)
+@Config(constants = BuildConfig.class, sdk = 21)
+@PowerMockIgnore({ "org.mockito.*", "org.robolectric.*", "android.*" })
 public class FireTVServiceTest {
 
     private RemoteMediaPlayer remoteMediaPlayer;
@@ -390,6 +394,7 @@ public class FireTVServiceTest {
     }
 
     @Test
+    @Ignore("not ready yet")
     public void testPlayMediaWithSubtitles() throws JSONException {
         MediaPlayer.LaunchListener launchListener = Mockito.mock(MediaPlayer.LaunchListener.class);
         MediaInfo mediaInfo = new MediaInfo.Builder("url", "mime")
@@ -411,6 +416,7 @@ public class FireTVServiceTest {
     }
 
     @Test
+    @Ignore("not ready yet")
     public void testPlayMediaWithOnlyRequiredFieldsInSubtitles() throws JSONException {
         MediaPlayer.LaunchListener launchListener = Mockito.mock(MediaPlayer.LaunchListener.class);
         MediaInfo mediaInfo = new MediaInfo.Builder("url", "mime")

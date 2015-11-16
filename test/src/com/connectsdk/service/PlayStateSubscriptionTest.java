@@ -21,6 +21,7 @@
 package com.connectsdk.service;
 
 import com.amazon.whisperplay.fling.media.controller.RemoteMediaPlayer;
+import com.connectsdk.BuildConfig;
 import com.connectsdk.service.capability.MediaControl;
 import com.connectsdk.service.config.ServiceConfig;
 import com.connectsdk.service.config.ServiceDescription;
@@ -31,13 +32,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
-import org.robolectric.RobolectricTestRunner;
+import org.robolectric.RobolectricGradleTestRunner;
 import org.robolectric.annotation.Config;
 
 
 
-@RunWith(RobolectricTestRunner.class)
-@Config(manifest=Config.NONE)
+@RunWith(RobolectricGradleTestRunner.class)
+@Config(constants = BuildConfig.class, sdk = 21)
 public class PlayStateSubscriptionTest {
 
     private RemoteMediaPlayer remoteMediaPlayer;
