@@ -302,6 +302,16 @@ public class FireTVService extends DeviceService implements MediaPlayer, MediaCo
      */
     @Override
     public void playMedia(MediaInfo mediaInfo, boolean shouldLoop, LaunchListener listener) {
+        playMedia(mediaInfo, shouldLoop, 0, listener);
+    }
+
+    @Override
+    public void playMedia(MediaInfo mediaInfo, boolean shouldLoop, long startPosition, LaunchListener listener) {
+        playMedia(mediaInfo, shouldLoop, 0, null, listener);
+    }
+
+    @Override
+    public void playMedia(MediaInfo mediaInfo, boolean shouldLoop, long startPosition, Object customData, LaunchListener listener) {
         setMediaSource(mediaInfo, listener);
     }
 
